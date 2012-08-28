@@ -58,12 +58,22 @@
       },
       blacken_pos: []
     },
-    game_rule: {
-      count_live_neighbor: function(pos) {
+    game_rules: {
+      is_valid_pos: function(pos) {
         if (pos === null || pos.x === null 
           || pos.y === null || pos.x % _L_.grid_span != 0 || pos.y % _L_.grid_span != 0) {
-          return 0;
+          return false;
         }
+        return true;
+      },
+      is_alive: function(pos) {
+        if (this.is_valid_pos(pos) && _L_.color.find_loc_in_blackened(pos) >= 0)
+          return true;
+        return false;
+      },
+      count_alive_neighbors: function(pos) {
+        if (!this.is_valid_pos(pos)) 
+          return 0;
         var neighbors = {
           //|--------------|
           //| n1 | n2 | n3 |
@@ -81,12 +91,15 @@
               n7: {x: pos.x, y: pos.y+_L_.grid_span},
               n8: {x: pos.x+_L_.grid_span, y: pos.y+_L_.grid_span}
             };
-        // TODO
         var cnt = 0;
         for (var n in neighbors) {
           cnt += ((_L_.color.find_loc_in_blackened(neighbors[n]) >= 0) ? 1 : 0);
         }
         return cnt;
+      },
+      transition: function() {
+        var next_round = [];
+
       }
     },
     mouse: {
@@ -114,12 +127,12 @@
 })();
 $(document).ready(function(){
   if (!_L_.detection.supports_canvas()){
-    alert("Please upgrade your browser to IE 9");
+    alert("Your browser does NOT SUPPORT canvas, please UPGRADE!");
   }
   _L_.draw_base();
   _L_.bind_canvas_event();
   $('button#start').click(function(e){
-    if (_L_.started) {
+    if (!_L_.started) {
       $(this).html('STOP');
       _L_.unbind_canvas_event();
       $('button#reset_canvas').attr('disabled', 'disabled');
