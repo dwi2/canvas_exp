@@ -114,6 +114,7 @@
       $('button#reset_canvas').bind('click', function(e){
         // reset canvas
         _L_.ctx.canvas.width= +(_L_.ctx.canvas.width);
+        _L_.color.blacken_pos = [];
         _L_.draw_base();
       });
     },
