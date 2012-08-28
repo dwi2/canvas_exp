@@ -37,24 +37,78 @@
     color: {
       black: '#000',
       white: '#eee',
-      flip: function(pos) {
-        var found = false;
+      find_loc_in_blackened: function(pos) {
+        var ind = -1;
         for(var i=0; i<this.blacken_pos.length; i++) {
           if (this.blacken_pos[i].x === pos.x && this.blacken_pos[i].y === pos.y) {
-            this.blacken_pos.splice(i,1);
-            found = true;
+            ind = i;
             break;
           }
         }
+        return ind;
+      },
+      flip: function(pos) {
+        var loc = this.find_loc_in_blackened(pos);
+        var found = ((loc >= 0) ? true : false);
+        if (found) 
+          this.blacken_pos.splice(loc, 1);
         this.blacken_pos = (found ? this.blacken_pos: this.blacken_pos.concat(pos));
         _L_.ctx.fillStyle= (found ? this.white : this.black);
         _L_.ctx.fillRect(+(pos.x)+1, +(pos.y)+1, +(_L_.grid_span)-1, +(_L_.grid_span)-1);
       },
       blacken_pos: []
     },
+    game_rule: {
+      count_live_neighbor: function(pos) {
+        if (pos === null || pos.x === null 
+          || pos.y === null || pos.x % _L_.grid_span != 0 || pos.y % _L_.grid_span != 0) {
+          return 0;
+        }
+        var neighbors = {
+          //|--------------|
+          //| n1 | n2 | n3 |
+          //|----|----|----|
+          //| n4 | x  | n5 |
+          //|----|----|----|
+          //| n6 | n7 | n8 | 
+          //|----|----|----|          
+              n1: {x: pos.x-_L_.grid_span, y: pos.y-_L_.grid_span},
+              n2: {x: pos.x, y: pos.y-_L_.grid_span},
+              n3: {x: pos.x+_L_.grid_span, y: pos.y-_L_.grid_span},
+              n4: {x: pos.x-_L_.grid_span, y: pos.y},
+              n5: {x: pos.x+_L_.grid_span, y: pos.y},
+              n6: {x: pos.x-_L_.grid_span, y: pos.y+_L_.grid_span},
+              n7: {x: pos.x, y: pos.y+_L_.grid_span},
+              n8: {x: pos.x+_L_.grid_span, y: pos.y+_L_.grid_span}
+            };
+        // TODO
+        var cnt = 0;
+        for (var n in neighbors) {
+          cnt += ((_L_.color.find_loc_in_blackened(neighbors[n]) >= 0) ? 1 : 0);
+        }
+        return cnt;
+      }
+    },
     mouse: {
       downed: false
     },
+    bind_canvas_event: function(){
+      $('canvas#cv').bind('click', function(e){
+        var cv = this;
+        var pos = _L_.get_nearest_left_top(e.pageX-cv.offsetLeft, e.pageY-cv.offsetTop);
+        _L_.color.flip(pos);
+      });
+      $('button#reset_canvas').bind('click', function(e){
+        // reset canvas
+        _L_.ctx.canvas.width= +(_L_.ctx.canvas.width);
+        _L_.draw_base();
+      });
+    },
+    unbind_canvas_event: function() {
+       $('canvas#cv').unbind('click');
+       $('button#reset_canvas').unbind('click');
+    },
+    started: false,
     dummy: null
   };
 })();
@@ -63,14 +117,18 @@ $(document).ready(function(){
     alert("Please upgrade your browser to IE 9");
   }
   _L_.draw_base();
-  $('canvas#cv').bind('click', function(e){
-    var cv = this;
-    var pos = _L_.get_nearest_left_top(e.pageX-cv.offsetLeft, e.pageY-cv.offsetTop);
-    _L_.color.flip(pos);
-  });
-  $('button#reset_canvas').click(function(e){
-    // reset canvas
-    _L_.ctx.canvas.width= +(_L_.ctx.canvas.width);
-    _L_.draw_base();
+  _L_.bind_canvas_event();
+  $('button#start').click(function(e){
+    if (_L_.started) {
+      $(this).html('STOP');
+      _L_.unbind_canvas_event();
+      $('button#reset_canvas').attr('disabled', 'disabled');
+    }
+    else {
+      $(this).html('START'); 
+      _L_.bind_canvas_event();
+      $('button#reset_canvas').removeAttr('disabled');
+    }
+    _L_.started = !_L_.started;
   });
 });
