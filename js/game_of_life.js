@@ -118,13 +118,15 @@
         return cnt;
       },
       transition: function() {
+        // NOTICE: transition might passed as function pointer
+        // please avoid to use 'this' keyword here
         var cv = $('canvas#cv')[0];
         var next_round = [];
         for (var x_=0; x_ < cv.width-1; x_+=_L_.grid_span){ // cv.width-1 is TRICKY
           for(var y_=0; y_ < cv.height-1; y_+=_L_.grid_span) { // cv.height-1 is TRICKY
             var cur = {x: x_, y: y_};
-            var alive_neighbor_cnt = this.count_alive_neighbors(cur);
-            if (this.is_alive(cur)) { // live cell
+            var alive_neighbor_cnt = _L_.game_rules.count_alive_neighbors(cur);
+            if (_L_.game_rules.is_alive(cur)) { // live cell
               if (alive_neighbor_cnt === 2 || alive_neighbor_cnt === 3)
                 next_round.push(cur);
             }
@@ -184,13 +186,38 @@
     },
     steps: {
       count: 0,
-      show: function() {
-        $('h2#steps').html(this.count);
+      speed: 300, // milliseconds
+      timerId: null,
+      show: function(warn) {
+        $('#steps h2').html(this.count);
+        if (warn === true) {
+          $('#steps').removeClass().addClass('alert alert-warning');
+        }
       },
       increase: function(n) {
         if (typeof n === 'number'){
           this.count += Math.round(n);
         }
+      },
+      run: function() {
+        this.timerId = window.setInterval(
+          function() {
+            _L_.game_rules.transition();
+            _L_.steps.increase(1);
+            _L_.steps.show();
+            if (_L_.color.blacken_pos == null 
+              || _L_.color.blacken_pos.length === 0) {
+              _L_.steps.stop();
+              _L_.steps.show(true);
+            }
+          }, 
+          this.speed);
+      },
+      stop: function() {
+        if (this.timerId != null) {
+          window.clearInterval(this.timerId);
+        }
+        this.timerId = null;
       },
       reset: function() {
         this.count = 0;
@@ -209,11 +236,13 @@ $(document).ready(function(){
   $('button#run').click(function(e){
     if (!_L_.started) {
       $(this).html('STOP');
+      _L_.steps.run();
       _L_.unbind_canvas_event();
       _L_.disable_all_buttons_except('button#run');
     }
     else {
       $(this).html('RUN'); 
+      _L_.steps.stop();
       _L_.bind_canvas_event();
       _L_.enable_all_buttons();
     }
