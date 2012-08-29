@@ -38,6 +38,8 @@
       black: '#000',
       white: '#eee',
       find_loc_in_blackened: function(pos) {
+        if (!_L_.game_rules.is_valid_pos(pos))
+          return;
         var ind = -1;
         for(var i=0; i<this.blacken_pos.length; i++) {
           if (this.blacken_pos[i].x === pos.x && this.blacken_pos[i].y === pos.y) {
@@ -47,17 +49,35 @@
         }
         return ind;
       },
+      to_white: function(pos) {
+        // NOTE: this function DID NOT record pos into blacken_pos, change color only
+        // use it with cautious
+        if (!_L_.game_rules.is_valid_pos(pos))
+          return;
+        _L_.ctx.fillStyle = this.white;
+        _L_.ctx.fillRect(+(pos.x)+1, +(pos.y)+1, +(_L_.grid_span)-1, +(_L_.grid_span)-1);
+      },
+      to_black: function(pos) {
+        // NOTE: this function DID NOT record pos into blacken_pos, change color only
+        // use it with cautious
+        if (!_L_.game_rules.is_valid_pos(pos))
+          return;
+        _L_.ctx.fillStyle = this.black;
+        _L_.ctx.fillRect(+(pos.x)+1, +(pos.y)+1, +(_L_.grid_span)-1, +(_L_.grid_span)-1);
+      },
       flip: function(pos) {
+        if (!_L_.game_rules.is_valid_pos(pos))
+          return;
         var loc = this.find_loc_in_blackened(pos);
         var found = ((loc >= 0) ? true : false);
         if (found) 
           this.blacken_pos.splice(loc, 1);
         this.blacken_pos = (found ? this.blacken_pos: this.blacken_pos.concat(pos));
-        _L_.ctx.fillStyle= (found ? this.white : this.black);
+        _L_.ctx.fillStyle = (found ? this.white : this.black);
         _L_.ctx.fillRect(+(pos.x)+1, +(pos.y)+1, +(_L_.grid_span)-1, +(_L_.grid_span)-1);
       },
       blacken_pos: []
-    },
+    }, // end of color
     game_rules: {
       is_valid_pos: function(pos) {
         if (pos === null || pos.x === null 
@@ -82,15 +102,15 @@
           //|----|----|----|
           //| n6 | n7 | n8 | 
           //|----|----|----|          
-              n1: {x: pos.x-_L_.grid_span, y: pos.y-_L_.grid_span},
-              n2: {x: pos.x, y: pos.y-_L_.grid_span},
-              n3: {x: pos.x+_L_.grid_span, y: pos.y-_L_.grid_span},
-              n4: {x: pos.x-_L_.grid_span, y: pos.y},
-              n5: {x: pos.x+_L_.grid_span, y: pos.y},
-              n6: {x: pos.x-_L_.grid_span, y: pos.y+_L_.grid_span},
-              n7: {x: pos.x, y: pos.y+_L_.grid_span},
-              n8: {x: pos.x+_L_.grid_span, y: pos.y+_L_.grid_span}
-            };
+            n1: {x: pos.x-_L_.grid_span, y: pos.y-_L_.grid_span},
+            n2: {x: pos.x, y: pos.y-_L_.grid_span},
+            n3: {x: pos.x+_L_.grid_span, y: pos.y-_L_.grid_span},
+            n4: {x: pos.x-_L_.grid_span, y: pos.y},
+            n5: {x: pos.x+_L_.grid_span, y: pos.y},
+            n6: {x: pos.x-_L_.grid_span, y: pos.y+_L_.grid_span},
+            n7: {x: pos.x, y: pos.y+_L_.grid_span},
+            n8: {x: pos.x+_L_.grid_span, y: pos.y+_L_.grid_span}
+          };
         var cnt = 0;
         for (var n in neighbors) {
           cnt += ((_L_.color.find_loc_in_blackened(neighbors[n]) >= 0) ? 1 : 0);
@@ -98,10 +118,34 @@
         return cnt;
       },
       transition: function() {
+        var cv = $('canvas#cv')[0];
         var next_round = [];
-
+        for (var x_=0; x_ < cv.width-1; x_+=_L_.grid_span){ // cv.width-1 is TRICKY
+          for(var y_=0; y_ < cv.height-1; y_+=_L_.grid_span) { // cv.height-1 is TRICKY
+            var cur = {x: x_, y: y_};
+            var alive_neighbor_cnt = this.count_alive_neighbors(cur);
+            if (this.is_alive(cur)) { // live cell
+              if (alive_neighbor_cnt === 2 || alive_neighbor_cnt === 3)
+                next_round.push(cur);
+            }
+            else { // dead cell
+              if (alive_neighbor_cnt === 3) 
+                next_round.push(cur);
+            }
+          }
+        }
+        // reset all to white
+        for(var p_ in _L_.color.blacken_pos) {
+          _L_.color.to_white(_L_.color.blacken_pos[p_]);
+          
+        }
+        _L_.color.blacken_pos = next_round;
+        for(var p_ in _L_.color.blacken_pos) {
+          _L_.color.to_black(_L_.color.blacken_pos[p_]);
+        }
+        // TODO
       }
-    },
+    }, // end of game_rules
     mouse: {
       downed: false
     },
@@ -116,11 +160,41 @@
         _L_.ctx.canvas.width= +(_L_.ctx.canvas.width);
         _L_.color.blacken_pos = [];
         _L_.draw_base();
+        _L_.steps.reset();
+        _L_.steps.show();
+      });
+      $('button#1_step').bind('click', function(e){
+        _L_.game_rules.transition();
+        _L_.steps.increase(1);
+        _L_.steps.show();
       });
     },
     unbind_canvas_event: function() {
-       $('canvas#cv').unbind('click');
-       $('button#reset_canvas').unbind('click');
+      $('canvas#cv').unbind('click');
+      $('button#reset_canvas').unbind('click');
+      $('button#1_step').unbind('click');
+    },
+    disable_all_buttons_except: function(btn_selector) {
+      if (typeof s === 'string') {
+        $('button').not(btn_selector).attr('disabled', 'disabled');
+      }
+    },
+    enable_all_buttons: function() {
+      $('button').removeAttr('disabled');
+    },
+    steps: {
+      count: 0,
+      show: function() {
+        $('h2#steps').html(this.count);
+      },
+      increase: function(n) {
+        if (typeof n === 'number'){
+          this.count += Math.round(n);
+        }
+      },
+      reset: function() {
+        this.count = 0;
+      }
     },
     started: false,
     dummy: null
@@ -128,20 +202,20 @@
 })();
 $(document).ready(function(){
   if (!_L_.detection.supports_canvas()){
-    alert("Your browser does NOT SUPPORT canvas, please UPGRADE!");
+    alert("Your browser does NOT SUPPORT canvas, please UPGRADE it!");
   }
   _L_.draw_base();
   _L_.bind_canvas_event();
-  $('button#start').click(function(e){
+  $('button#run').click(function(e){
     if (!_L_.started) {
       $(this).html('STOP');
       _L_.unbind_canvas_event();
-      $('button#reset_canvas').attr('disabled', 'disabled');
+      _L_.disable_all_buttons_except('button#run');
     }
     else {
-      $(this).html('START'); 
+      $(this).html('RUN'); 
       _L_.bind_canvas_event();
-      $('button#reset_canvas').removeAttr('disabled');
+      _L_.enable_all_buttons();
     }
     _L_.started = !_L_.started;
   });
