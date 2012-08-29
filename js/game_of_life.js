@@ -193,6 +193,9 @@
         if (warn === true) {
           $('#steps').removeClass().addClass('alert alert-warning');
         }
+        else {
+          $('#steps').removeClass().addClass('alert alert-info');
+        }
       },
       increase: function(n) {
         if (typeof n === 'number'){
