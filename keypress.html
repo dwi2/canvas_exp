@@ -1,0 +1,61 @@
+<!DOCTYPE HTML>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <!-- bootstrap -->
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<header>
+  <div class="navbar navbar-inverse navbar-fixed-top">
+    <div class="navbar-inner">
+      <div class="container">
+        <a class="brand">A test on keypress</a>
+      </div>
+    </div>
+  </div>
+</header>
+<article><div class="container">
+  <div class="hero-unit"><canvas id="cv" width="851" height="150">Your browser does NOT SUPPORT canvas, please UPGRADE it!</canvas></div>
+  <div class="row-fluid">
+    <div class="span2"></div>
+    <div class="span7">
+      <form id="some_form">
+        <p><input type="text"></input></p>
+        <p><input type="submit" value="OK"/></p>
+      </form>
+    </div>
+    <div class="span3"><div id="steps" class="alert alert-info"><h2>0</h2></div></div>
+  </div>
+</div></article>
+<article><div class="container">
+  <div class="row-fluid">
+    <div class="span12"><div class="well"><p></p>
+    <p>Written by Tzu-Lin Huang &lt;dwi2 AT dwi2.com&gt;</p>
+    </div></div>
+  </div>
+</div></article>
+<script src="js/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/keyboard.js"></script>
+<script>
+var jQuery = jQuery || {},
+  $ = $ || jQuery,
+  window = window || {},
+  document = document || {};
+$(document).ready(function () {
+  'use strict';
+  var cv = $('#cv')[0],
+    action = function (evt) {
+      var k = evt.keyCode || evt.which,
+        s = String.fromCharCode(k),
+        keys = KeyboardJS.activeKeys();
+      console.log(s + ' keypress on ' + this);
+      console.log(keys);
+      return false;
+  };
+  document.addEventListener('keypress', action, false);
+});
+</script>
+</body>
