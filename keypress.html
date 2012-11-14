@@ -21,10 +21,12 @@
   <div class="row-fluid">
     <div class="span2"></div>
     <div class="span7">
+      <!--
       <form id="some_form">
         <p><input type="text"></input></p>
         <p><input type="submit" value="OK"/></p>
       </form>
+    -->
     </div>
     <div class="span3"><div id="steps" class="alert alert-info"><h2>0</h2></div></div>
   </div>
@@ -47,15 +49,28 @@ var jQuery = jQuery || {},
 $(document).ready(function () {
   'use strict';
   var cv = $('#cv')[0],
-    action = function (evt) {
+    press = function (evt) {
       var k = evt.keyCode || evt.which,
         s = String.fromCharCode(k),
         keys = KeyboardJS.activeKeys();
-      console.log(s + ' keypress on ' + this);
+      console.log(s + ' ' + evt.type +' on ' + this);
       console.log(keys);
       return false;
-  };
-  document.addEventListener('keypress', action, false);
+    },
+    down = function (evt) {
+      var k = evt.keyCode || evt.which,
+        s = String.fromCharCode(k),
+        keys = KeyboardJS.activeKeys();
+      console.log(s + ' ' + evt.type +' on ' + this);
+      console.log(keys);
+      return false;
+    },
+    wrapper = function () {
+      console.log('register event listener');
+      document.addEventListener('keydown', down, false);
+      document.addEventListener('keypress', press, false);
+    };
+  window.setTimeout(wrapper, 1000);
 });
 </script>
 </body>
