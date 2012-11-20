@@ -1,0 +1,75 @@
+<!DOCTYPE HTML>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <!-- bootstrap -->
+  <link href="css/bootstrap.min.css" rel="stylesheet">  
+</head>
+<body>
+<header>
+  <div class="navbar navbar-inverse navbar-static-top">
+    <div class="navbar-inner">
+      <div class="container">
+        <a class="brand">A simple websocket masked data decoder (text frame only)</a>
+      </div>
+    </div>
+  </div>
+</header>
+<article><div class="container">
+  <div class="row-fluid">
+    <div class="span12">
+      <form id="masked_data_form" class="form-horizontal">
+      <textarea id="masked_data" name="masked_data" placeholder="Paste masked websocket data here (include websocket header)" rows="5"></textarea>
+      <button id="clean" class="btn btn-large btn-primary">Clean</button>
+      <input type="submit" value="Decode!" class="btn btn-large btn-inverse"/>
+      </form>
+    </div>
+  </div>
+  <div class="row-fluid">
+    <div class="span12 well">
+      <p id="result_area"></p>
+    </div>
+  </div>
+</div></article>
+<article><div class="container">
+  <div class="row-fluid">
+    <div class="span12"><div class="well"><p></p>
+    <p>Written by Tzu-Lin Huang &lt;dwi2 AT dwi2.com&gt;</p>
+    </div></div>
+  </div>
+</div></article>
+<script src="js/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/websocket_decoder.js"></script>
+<script>
+var jQuery = jQuery || {},
+  $ = $ || jQuery,
+  window = window || {},
+  document = document || {},
+  console = window.console || {},
+  WebSocketDecoder = WebSocketDecoder || {};
+$(document).ready(function () {
+  'use strict';
+  var form = $('#masked_data_form'),
+    clean_btn = $('#masked_data_form button#clean'),
+    textarea = $('#masked_data_form textarea#masked_data'),
+    result_area = $('#result_area'),
+    masked_data = '',
+    decoder = new WebSocketDecoder();
+  form.bind('submit', function (evt) {
+    evt.preventDefault();
+    result_area.empty();
+    masked_data = textarea.val();
+    if (masked_data && masked_data.length > 0) {
+      result_area.empty().html(decoder.unmask(masked_data));
+    }
+  });
+  clean_btn.bind('click', function (evt) {
+    evt.preventDefault();
+    textarea.val('');
+    result_area.empty();
+  });
+});
+</script>
+</body>
