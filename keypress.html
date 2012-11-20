@@ -45,32 +45,38 @@
 var jQuery = jQuery || {},
   $ = $ || jQuery,
   window = window || {},
-  document = document || {};
-$(document).ready(function () {
+  document = document || {},
+  KeyboardJS = KeyboardJS || {},
+  console = window.console || {};
+(function () {
   'use strict';
   var cv = $('#cv')[0],
     press = function (evt) {
       var k = evt.keyCode || evt.which,
         s = String.fromCharCode(k),
         keys = KeyboardJS.activeKeys();
-      console.log(s + ' ' + evt.type +' on ' + this);
+      console.log(s + ' ' + evt.type + ' on ' + this);
       console.log(keys);
       return false;
     },
-    down = function (evt) {
+    updown = function (evt) {
       var k = evt.keyCode || evt.which,
         s = String.fromCharCode(k),
         keys = KeyboardJS.activeKeys();
-      console.log(s + ' ' + evt.type +' on ' + this);
+      console.log(s + ' ' + evt.type + ' on ' + this);
       console.log(keys);
+      if (evt.type === 'keyup') {
+        evt.preventDefault();  
+      }      
       return false;
     },
     wrapper = function () {
       console.log('register event listener');
-      document.addEventListener('keydown', down, false);
+      document.addEventListener('keyup', updown, false);
+      document.addEventListener('keydown', updown, false);
       document.addEventListener('keypress', press, false);
     };
   window.setTimeout(wrapper, 1000);
-});
+}());
 </script>
 </body>
