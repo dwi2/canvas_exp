@@ -41,7 +41,7 @@ WebSocketDecoder.prototype.unmask = function (masked_data) {
           mask_key.push(parseInt(data.substring(10, 12), 16));
           text = '';
           j = 0;
-          for (i = 12; i + 2 < data.length; i += 2) {
+          for (i = 12; i < data.length; i += 2) {
             // According to RFC 6455 5.3 Client-to-Server Masking(page 33)
             // j = i mod 4
             // transformed-octet-i  = original-octet-i xor masking-key-octet-j
@@ -57,7 +57,7 @@ WebSocketDecoder.prototype.unmask = function (masked_data) {
         // data without masking
         text = '';
         unmasked = parseInt(data.substring(i, i + 2), 16);
-        for (i = 4; i + 2 < data.length; i += 2) {
+        for (i = 4; i < data.length; i += 2) {
           text += String.fromCharCode((unmasked >>> 8) * 0xff)
             + String.fromCharCode((unmasked & 0xff));
         }
