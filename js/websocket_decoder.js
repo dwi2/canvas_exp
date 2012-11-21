@@ -15,7 +15,8 @@ WebSocketDecoder.prototype.unmask = function (masked_data) {
     is_masked = false,
     is_text = false,
     text = '',
-    i = 0;
+    i = 0,
+    j = 0;
   try {
     if (self.in_node_js && masked_data instanceof Buffer) {
       // in NodeJS and type of masked_data is Buffer
@@ -33,17 +34,20 @@ WebSocketDecoder.prototype.unmask = function (masked_data) {
       if (is_masked) {
         payload_length = parseInt(data.substring(2, 4), 16) & 0x7f;
         if (payload_length < 126) {
-          //console.log('mask_key = ' + data.substring(4, 12));
-          mask_key = parseInt(data.substring(4, 12), 16);
+          mask_key = [];
+          mask_key.push(parseInt(data.substring(4, 6), 16));
+          mask_key.push(parseInt(data.substring(6, 8), 16));
+          mask_key.push(parseInt(data.substring(8, 10), 16));
+          mask_key.push(parseInt(data.substring(10, 12), 16));
           text = '';
-          for (i = 12; i + 8 < data.length; i += 8) {
-            unmasked = parseInt(data.substring(i, i + 8), 16) ^ mask_key;
-            //console.log(unmasked.toString(16));
-            text +=
-              String.fromCharCode(((unmasked >>> 24) & 0xff))
-              + String.fromCharCode(((unmasked >>> 16) & 0xff))
-              + String.fromCharCode(((unmasked >>> 8) & 0xff))
-              + String.fromCharCode((unmasked & 0xff));
+          j = 0;
+          for (i = 12; i + 2 < data.length; i += 2) {
+            // According to RFC 6455 5.3 Client-to-Server Masking(page 33)
+            // j = i mod 4
+            // transformed-octet-i  = original-octet-i xor masking-key-octet-j
+            unmasked = parseInt(data.substring(i, i + 2), 16) ^ mask_key[j];
+            text += String.fromCharCode((unmasked & 0xff));
+            j = (j + 1) & 0x3;
           }
           //console.log(text);
         } else {
@@ -58,7 +62,6 @@ WebSocketDecoder.prototype.unmask = function (masked_data) {
             + String.fromCharCode((unmasked & 0xff));
         }
       }
-
     }
   } catch (e) {
     console.log(e.message);
